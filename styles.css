@@ -1,0 +1,147 @@
+.visible {
+  display: block;
+}
+.hidden {
+  display: none;
+}
+
+body {
+  background-color: rgb(0, 0, 0);
+  color: rgb(104, 220, 255);
+  font-family: Georgia, sans-serif;
+  text-align: center;
+  font-size: 18px;
+}
+
+#uploadedImage {
+  margin: 0 auto;
+  border: 5px solid rgb(0, 36, 89);
+  display: none; /* 初始隐藏 */
+  max-width: 80%;
+  max-height: 20vh;
+  box-sizing: border-box; /* 确保内层边框包含在元素内 */
+  box-shadow: 
+    0 0 0 4px rgb(46, 185, 235) , 
+    0 0 0 7px rgb(188, 239, 254);   
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+    
+span {
+  display: inline-block;
+  font-weight: bold;
+  white-space: nowrap;
+  border-radius: 50%;
+  color: rgb(0, 52, 130);
+  border: 3px solid rgb(0, 132, 180);
+  background: radial-gradient(circle at center, rgb(186, 250, 255), rgb(0, 132, 180));
+  padding: 10px;
+  margin: 5px;
+}
+
+.selected {
+  color: rgb(105, 58, 0);
+  background: linear-gradient(to bottom, rgb(253, 233, 118), rgb(166, 126, 27));
+  border: 3px solid rgb(166, 126, 27);
+  font-weight: bold;
+}
+.selected::before {
+  content: "√";
+  font-weight: bold;
+  margin-right: 5px;
+}
+
+p {
+  font-weight: bold;
+}
+
+.separator {
+  border: none; /* 移除边框 */
+  height: 1px; /* 设置高度 */
+  background-image: linear-gradient(to right, transparent, #636363, transparent); 
+  margin: 20px 0; /* 上下边距 */
+}
+
+button {
+  border-radius: 50%; 
+  background: radial-gradient(circle at center, #fa7066, #b81515); 
+  color: white; 
+  padding: 12px 23px; 
+  font-size: 18px; 
+  font-weight: bold;
+  cursor: pointer; 
+  border: 2px solid #820202; 
+  box-shadow: 0 0 0 3px #ffa0ac; 
+  text-shadow: 0px 0px 20px rgb(0, 0, 0); 
+  display: inline-flex; /* 使用弹性盒模型 */
+  justify-content: center; /* 水平居中 */
+  align-items: center; /* 垂直居中 */
+  width: 125px; 
+  height: 115px; 
+  position: relative; /* 为伪元素设置定位 */
+  overflow: hidden; /* 确保伪元素不影响按钮内容 */
+  margin-top: 20px;
+  box-sizing: border-box; /* 包含内边距和边框在宽度和高度中 */
+}
+
+button::after {
+  content: '';
+  display: block;
+  padding-top: 100%; /* 使高度等于宽度 */
+}
+
+/* 定义文件选择器的样式 */
+input[type="file"] {
+  display: inline-block; /* 将元素显示为行内块级元素，以便应用宽度和高度属性 */
+}
+
+@keyframes shimmer {
+  0% { color: transparent; }
+  50% { background: linear-gradient(to bottom, rgb(166, 126, 27)), rgb(253, 234, 127); }
+  100% { color: transparent; }
+}
+
+highlight-surprise {
+  font-size: 48px; 
+  background: linear-gradient(to bottom, rgb(253, 233, 118), rgb(166, 126, 27)); 
+  background-clip: border-box; 
+  -webkit-background-clip: text; 
+  color: transparent;
+  font-weight: bold;
+  animation: shimmer 2s infinite alternate; 
+  margin-top: 1px;
+}
+
+highlight {
+  background: linear-gradient(to bottom, rgb(253, 233, 118), rgb(166, 126, 27)); 
+  background-clip: border-box; 
+  -webkit-background-clip: text; 
+  font-style: italic;
+  color: transparent;
+  font-weight: bold;
+  animation: shimmer 2s infinite alternate; 
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  margin: 20px 0;
+  width: 100%;
+  max-width: 1000px; /* 可根据需要调整最大宽度 */
+}
+
+.column {
+  flex: 0 1 auto; /* 防止列过度扩展 */
+  padding: 10px 10px; /* 移除左右内边距 */
+}
+
+.column:last-child {
+  white-space: normal; /* 确保文本正常换行 */
+  word-break: normal; /* 允许单词正常换行 */
+  text-align: left;
+  padding: 10px 10px; /* 移除所有内边距 */
+  flex-grow: 1; /* 允许最后一列扩展以占用剩余空间 */
+}

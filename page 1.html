@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ON FIRE</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="page1" class="visible">
+        <highlight-surprise>~ ON FIRE ~</highlight-surprise>
+        <p>Trash or Treasure? Upload a picture for an expert appraisal.</p>
+        <form  action="/i2t/api/upload/" id="image-upload-form" method="post"  enctype="multipart/form-data"> <input type="hidden" name="csrfmiddlewaretoken" value="QMfeDkSvqCNFxLreiGeFjLhFKuqMDtZZiIqtvKPKd682B3St99EhFDCN9h2MNjpK">
+            <input type="file" id="imageInput" name="image" required onchange="displayImageAndSubmit()">
+            <button type="submit" style="display: none;">Submit</button> <!-- 隐藏的提交按钮 -->
+        </form>
+    </div>
+
+    <div id="page2" class="hidden">
+        <img id="uploadedImage" src="" alt="" >
+    </div>
+
+    <div id="page3" class="hidden">
+        <div id="image_status"></div>
+        <div id="image_id"></div>
+        <div id="text_container"></div>
+        <img id="user_image" src="" alt="Uploaded Image">
+        <button id="check" disabled>Check Status</button>
+    </div>
+
+    <div id="page4" class="hidden">
+        <p id="result"></p>
+    </div>
+
+    <script>
+        let initialValue; // 定义全局变量保存初始值
+
+        // Helper functions to display or hide a loading spinner
+        function show_loading() {
+            document.getElementById("loading").removeAttribute("hidden");
+        }
+
+        function hide_loading() {
+            document.getElementById("loading").setAttribute("hidden", true);
+        }
+
+        // Reset the form and remove the image and generated text
+        function clear_data() {
+            const status_div = document.getElementById("image_status");
+            status_div.innerHTML = "";
+            const id_div = document.getElementById("image_id");
+            id_div.innerHTML = "";
+            const check_button = document.getElementById("check");
+            check_button.setAttribute("disabled", true);
+            document.getElementById("text_container").innerHTML = "";
+            document.getElementById("user_image").setAttribute("src", "");
+        }
+
+        // Helper to show the generated text and display the uploaded image
+        function display_data(data) {
+            const status_div = document.getElementById("image_status");
+            status_div.innerHTML = `<p>${data.status}</p>`;
+            if (data.image_id !== undefined) {
+                document.getElementById("image_id").innerHTML = `<p>${data.image_id}</p>`;
+            }
+            if (data.text !== undefined) {
+                document.getElementById("text_container").innerHTML = `<p>${data.text}</p>`;
+            }
+            if (data.image_url !== undefined) {
+                document.getElementById("user_image").setAttribute("src", data.image_url);
+            }
+            const check_button = document.getElementById("check");
+            check_button.removeAttribute("disabled");
+        }
+
+        // This is the main function that runs when the user submits the form
+        function handleSubmit(event) {
+            event.preventDefault();
+            clear_data();
+            show_loading();
+            const form = document.getElementById("image-upload-form");
+            const formData = new FormData(form);
+            const url = form.getAttribute("action");
+            const fetchOptions = {
+                method: form.getAttribute("method"),
+                body: formData,
+            };
+
+            fetch(url, fetchOptions)
+                .then((response) => response.json())
+                .then((data) => {
+                    console.log(data);
+                    display_data(data);
+                    check_until_complete();
+                });
+        }
+
+        // Check whether the text generation has completed
+        function check_status() {
+            const image_id = document.getElementById("image_id").innerText;
+            const url = `/i2t/api/status/${image_id}`;
+            fetch(url)
+                .then((response) => response.json())
+                .then((data) => {
+                    display_data(data);
+                });
+        }
+
+        // Keep checking for the most recent text generation until it is finished
+        function check_until_complete() {
+            const image_id = document.getElementById("image_id").innerText;
+            const url = `/i2t/api/status/${image_id}`;
+            fetch(url)
+                .then((response) => response.json())
+                .then((data) => {
+                    console.log(data);
+                    if (data.status === "Processing") {
+                        setTimeout(check_until_complete, 2000);
+                    } else {
+                        display_data(data);
+                        hide_loading();
+                    }
+                });
+        }
+
+        // Setup when the page loads, attach the handleSubmit function to the form.
+        const form = document.getElementById("image-upload-form");
+        form.addEventListener("submit", handleSubmit);
+
+        document.getElementById("check").addEventListener("click", check_status);
+
+
+        function displayImage() {
+            var input = document.getElementById('imageInput');
+            var img = document.getElementById('uploadedImage');
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    img.src = e.target.result;
+                    img.style.display = 'block';
+                    console.log("Image loaded:", e.target.result);
+                    // 等待图片加载完成后再调整大小
+                    if (img.complete) {
+                        setTimeout(adjustImageSize, 100); // 延迟100毫秒
+                        // 跳转到新页面
+                        showPage3();
+                    } else {
+                        img.onload = function() {
+                            setTimeout(adjustImageSize, 100); // 延迟100毫秒
+                            // 跳转到新页面
+                            showPage3();
+                        };
+                    }
+                }          
+                reader.readAsDataURL(input.files[0]);
+            } else {
+                // 如果用户没有上传图片，不执行跳转操作
+                console.log("No image uploaded");
+            }
+        }
+
+        // 在图片显示后自动提交表单
+        function displayImageAndSubmit() {
+            displayImage(); // 显示图片
+            document.getElementById("image-upload-form").submit(); // 自动提交表单
+        }
+
+        function showPage3() {
+            document.getElementById('page1').classList.remove('visible');
+            document.getElementById('page1').classList.add('hidden');
+            document.getElementById('page2').classList.add('visible');
+            document.getElementById('page2').classList.remove('hidden');
+            document.getElementById('page3').classList.add('visible');
+            document.getElementById('page3').classList.remove('hidden');
+            displayRandomValue();
+        }
+
+        function adjustImageSize() {
+            var img = document.getElementById('uploadedImage');
+            var screenHeight = document.documentElement.clientHeight;
+            var screenWidth = document.documentElement.clientWidth;
+            var aspectRatio = img.naturalWidth / img.naturalHeight;
+            var maxHeight = screenHeight * 0.2;
+            var maxWidth = screenWidth * 0.8;
+
+            var imgHeight = maxHeight;
+            var imgWidth = imgHeight * aspectRatio;
+
+            if (imgWidth > maxWidth) {
+                imgWidth = maxWidth;
+                imgHeight = imgWidth / aspectRatio;
+            }
+
+            img.style.width = imgWidth + 'px';
+            img.style.height = imgHeight + 'px';
+        }
+
+        window.onload = function() {
+            // 监听窗口大小变化
+            window.onresize = adjustImageSize;
+        };
+
+        function generateRandomValue() {
+            var value = Math.floor(Math.random() * (2500 - 500 + 1)) + 500;
+            return value; // 返回value的值
+        }
+        
+        function displayRandomValue() {
+            initialValue = generateRandomValue(); // 将生成的值保存到全局变量
+            document.getElementById("page3").innerHTML = `
+                <p>Estimated value: </p>
+                <highlight-surprise> $${initialValue} </highlight-surprise><br><br>
+                <p>Select up to 3 attributes to increase the value.</p>
+                <div id="attributes"></div> 
+                <button onclick="submitAttributes()">Submit</button>`;
+            generateAttributes();
+        }
+  
+        const wordListA = [
+            "Painting", "Photography", "Drawing", "Sculpture", "Printmaking", "Abstract", "Conceptual", 
+            "Minimalism", "Pop Art", "Installation Art", "New Media Art", "Photorealism", "Figurative", 
+            "Video Art", "Surrealism", "Postmodern", "Assemblage", "Multimedia", 
+            "Participatory", "Performance", "Land Art", "Neo-Expressionism", 
+            "Figurative", "Still Life", "Public Art", "Prank Art", "Art and Fashion", 
+            "Limited Edition", "Red Carpet Event", "Institutional Critique", "Autobiographical", 
+            "Interdisciplinary", "Headline News", "Donor Class", 
+            "Authentic", "Unique", "Cultural Taboo", "Art World Feud", "Posthumous Fame", "Iconic Style", 
+            "High Visibility", "Provocative Themes", "Social Media Presence", "Trendsetting", 
+            "Influencer Endorsement", "Artistic Versatility", "Critical Acclaim", "Signature Work", 
+            "Public Collection", "Private Collection", "Didactic", "Celebrity Collector", "Collector Loyalty", 
+            "International Demand", "Blockbuster Exhibition", "Documented Provenance", "Critically Acclaimed", 
+            "Scholarly Significant", "Restoration Record", "Conservation Treatment", "Yale University", 
+            "Royal College of Art", "School of the Art Inst. of Chicago (SAIC)", "Parsons School of Design", 
+            "Rhode Island School of Design (RISD)", "Columbia Univ. in NY", "Goldsmiths, Univ. of London", 
+            "San Francisco Art Inst. (SFAI)", "Massachusetts Inst. of Technology (MIT)", "Turner Prize", 
+            "Golden Lion Prize", "Hugo Boss Prize", "MacArthur Fellowship", "Catalogue Raisonné", 
+            "Marketing", "Christie's Auction", "Sotheby's Auction", "Private Treaty Sale", 
+            "Market Momentum", "Art Flipping", "Reserve Pricing", "Fractional Ownership", 
+            "Artnet Price Database", "Third-Party Guarantee", "Freeport Storage", "M+ Museum", "Louvre Museum", 
+            "Musée d'Orsay", "Metropolitan Museum of Art", "British Museum", "The Broad", "Berlin Biennale", 
+            "La Biennale de Lyon", "Istanbul Biennial", "Sharjah Biennial", "Carnegie International Art Exhibition", 
+            "DAK'ART", "Liverpool Biennial", "Shanghai Biennale"
+        ];
+        const wordListB = [
+            "MoMA", "Tate Modern", "Centre Pompidou", "Guggenheim Museum", "Gagosian Gallery", 
+            "David Zwirner Gallery", "Pace Gallery", "Hauser & Wirth", "White Cube Gallery", "Sprüth Magers Gallery", 
+            "Galerie Perrotin", "Art Basel", "Frieze Art Fair", "Venice Biennale", "São Paulo Biennial", "Whitney Biennial", 
+            "Documenta (Kassel)", "Manifesta", "Gwangju Biennale"
+        ];
+        let selectedWords = [];
+
+       function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+        
+        function generateAttributes() {
+            let attributes = '';
+            shuffleArray(wordListA); // 打乱 wordListA
+            shuffleArray(wordListB); // 打乱 wordListB
+            for (let i = 0; i < 9; i++) {
+                attributes += `<span onclick="select(this)">${wordListA[i]}</span>`;
+            }
+            for (let i = 0; i < 1; i++) {
+                attributes += `<span onclick="select(this)">${wordListB[i]}</span>`;
+            }
+
+            document.getElementById('attributes').innerHTML = attributes;
+        
+            // 随机打乱词汇的顺序
+            let words = [];
+            for (let i = 0; i < 9; i++) {
+                words.push(wordListA[i]);
+            }
+            words.push(wordListB[0]);
+            shuffleArray(words);
+
+            // 重新呈现词汇列表
+            let newAttributes = '';
+            for (let i = 0; i < words.length; i++) {
+                newAttributes += `<span onclick="select(this)">${words[i]}</span>`;
+            }
+            document.getElementById('attributes').innerHTML = newAttributes;    
+        }
+        
+        function select(element) {
+            if (!selectedWords.includes(element.textContent)) {
+                element.classList.add("selected");
+                selectedWords.push(element.textContent);
+            } else {
+                element.classList.remove("selected");
+                selectedWords = selectedWords.filter(word => word !== element.textContent);
+            }
+        }
+
+        function submitAttributes() {
+            if (selectedWords.length > 3) {
+                alert('You can only select up to 3 attributes.');
+                return;
+            }            
+            if (selectedWords.length < 1) {
+                alert('Please select at least 1 attributes.');
+                return;
+            }
+            let value = initialValue; // 使用之前保存的初始值
+            for (let word of selectedWords) {
+                if (wordListA.includes(word)) {
+                    value *= 1.2;
+                } else if (wordListB.includes(word)) {
+                    value *= 1.2;
+                }
+            }
+            value = Math.floor(value); 
+            document.getElementById('result').innerHTML = `
+                The value has increased to: <br><br>
+                 <highlight-surprise>$${value} </highlight-surprise><br><br>
+                <div class="separator"></div>
+                <br><br>
+                Artists with the ‘right attributes’ have transformed lower-valued pieces into million-dollar artworks by <highlight>burning</highlight> them!  <br><br>
+                Did you choose the attributes well? <br><br>
+                <div class="option">
+                    <div class="column">
+                        <button onclick="keepIt(${value})">Keep it</button>
+                    </div>
+                    <div class="column">
+                        <p>The value stays the same.</p>
+                    </div>
+                </div>
+                <div class="option">
+                    <div class="column">
+                        <button onclick="burn(${value})">Burn it</button>
+                    </div>
+                    <div class="column">
+                        <p>The value can reach <highlight>$1 million</highlight> or drop to <highlight>0</highlight>.</p>
+                    </div>
+                </div>
+            `;
+            document.getElementById('page2').classList.remove('visible');
+            document.getElementById('page2').classList.add('hidden');
+            document.getElementById('page3').classList.remove('visible');
+            document.getElementById('page3').classList.add('hidden');
+            document.getElementById('page4').classList.add('visible');
+            document.getElementById('page4').classList.remove('hidden');
+        }
+
+        function keepIt(value) {
+            document.getElementById('page2').classList.remove('hidden');
+            document.getElementById('page2').classList.add('visible');
+            document.getElementById('result').innerHTML = `
+                Sold! Your artwork is firmly valued as: <br><br>
+                <highlight-surprise>$${value}!</highlight-surprise><br><br>
+                But...<br><br>
+                if you wanna play with FIRE and challenge your luck, just press👇<br><br>
+                <button onclick="playAgain()">Play Again</button>
+            `;
+        }   
+
+        const GoldenLibrary = [
+            "You’re On Fire!",
+            "You’re Heating Up!",
+            "You’re Smokin’！",
+            "That’s Hot! 👆",
+            "A Blaze of Glory!",
+            "Like moths to a flame, the art market is drawn to your artwork!",
+            "Somebody bring the marshmallows!",
+            "Stop, drop, and roll!",
+            "Your Future’s So Bright, You've Gotta Wear Shades!"
+        ];
+
+        function getRandomGolden() {
+            const randomIndex = Math.floor(Math.random() * GoldenLibrary.length);
+            return GoldenLibrary[randomIndex];
+        }
+
+        const AshLibrary = [
+            "You got burned.",
+            "Your art collecting career went up in smoke.",
+            "Flamed out.",
+            "You got smoked.",
+            "Ouch! Somebody call the burn ward!",
+            "If you can’t stand the heat, stay out of the art market.",
+            "Scorched earth.",
+            "Nice job, Cinder-ella.",
+            "Santa left you some coals."
+        ];
+
+        function getRandomAsh() {
+            const randomIndex = Math.floor(Math.random() * AshLibrary.length);
+            return AshLibrary[randomIndex];
+        }
+
+        const ReIgnite = [
+            "Re-ignite? 👇",
+            "Spark anew? 👇",
+            "Add more kindling? 👇",
+            "Add more fuel? 👇"
+        ];
+
+        function Replay() {
+            const randomIndex = Math.floor(Math.random() * ReIgnite.length);
+            return ReIgnite[randomIndex];
+        }
+
+        function burn(value) {
+            if (selectedWords.some(word => wordListB.includes(word))) {
+                document.getElementById('result').innerHTML = `
+                    You’ve chosen well——This has become a blue-chip artwork!<br><br>
+                     <highlight-surprise>$1000000</highlight-surprise><br><br>
+                     ${getRandomGolden()}<br><br>
+                    <img src="MoneyGif.gif" alt="Money""><br><br> 
+                    ${Replay()}<br><br>
+                    <button onclick="playAgain()">Play Again</button>
+                `;
+            } else {
+                document.getElementById('result').innerHTML = `
+                    You’ve chosen poorly...value decreases to:<br><br> 
+                    <highlight-surprise>0. </highlight-surprise><br><br>
+                    ${getRandomAsh()}<br><br>
+                    <img src="ash.jpg" alt="Ash Trophy" style="max-width: 80%; max-height: 45vh; "><br><br>
+                    ${Replay()}<br><br>
+                    <button onclick="playAgain()">Play Again</button>
+                `;
+            }
+        }
+
+        function resetPage() {
+            // Reset image
+            document.getElementById('uploadedImage').src = '';
+            document.getElementById('uploadedImage').style.display = 'none';
+
+            // Reset text
+            document.getElementById('page1').classList.remove('hidden');
+            document.getElementById('page1').classList.add('visible');
+            document.getElementById('page2').classList.remove('visible');
+            document.getElementById('page2').classList.add('hidden');
+            document.getElementById('page4').classList.remove('visible');
+            document.getElementById('page4').classList.add('hidden');
+        }
+
+        function playAgain() {
+            resetPage(); // Call resetPage function
+            generateAttributes(); // Regenerate attributes
+            selectedWords = []; // Clear selected words
+        }
+
+        window.onload = function() {
+            adjustImageSize();
+            generateAttributes();
+        };
+    </script>
+    
+</body>
+</html>
