@@ -14,15 +14,15 @@ body {
 }
 
 #loading {
+  display: flex; 
+  justify-content: center; 
+  align-items: center; 
+  height: 100vh;
   position: fixed; /* 固定定位，确保覆盖整个屏幕 */
   width: 100%; /* 全宽 */
-  height: 100%; /* 全高 */
   background-color: rgba(0,0,0,0.5); /* 50%的黑色透明背景 */
   z-index: 9999; /* 确保在其他元素之上 */
-  display: flex; /* 使用Flexbox布局 */
-  justify-content: center; /* 水平居中 */
-  align-items: center; /* 垂直居中 */
-  flex-direction: column; /* 元素垂直排列 */
+  flex-direction: column;
 }
 
 #loading .spinner {
